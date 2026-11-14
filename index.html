@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outpost 30 – Junior Astronaut Mission Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1026; --bg2:#141b3d; --card:#ffffff; --ink:#1d2340; --muted:#5d6488;
+  --air:#2bb3ff; --food:#3cc46a; --bat:#ffc533; --shield:#9a7cff; --dose:#ff6b4a; --sci:#ff4fa3;
+  --line:#e4e7f3; --radius:18px;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{min-height:100vh;margin:0;background:var(--bg) radial-gradient(1200px 600px at 70% -10%,#26306b 0%,var(--bg) 60%) no-repeat;color:var(--ink);
+  font-family:Nunito,system-ui,sans-serif;font-size:17px;line-height:1.45}
+h1,h2,h3,.big{font-family:Fredoka,Nunito,system-ui,sans-serif;letter-spacing:.2px}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none!important}
+.wrap{max-width:1180px;margin:0 auto;padding:14px}
+
+/* ---------- top bar ---------- */
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#fff;margin-bottom:10px}
+.logo{font-family:Fredoka,Nunito,system-ui,sans-serif;font-weight:700;font-size:24px;display:flex;align-items:center;gap:8px}
+.logo span{color:#ffd166}
+.pill{background:rgba(255,255,255,.12);border-radius:999px;padding:6px 12px;font-weight:700;font-size:15px}
+.spacer{flex:1}
+.tbtn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:7px 11px;font-weight:700;font-size:14px}
+.tbtn:hover{background:rgba(255,255,255,.22)}
+.tbtn.on{background:#ffd166;color:#1d2340;border-color:#ffd166}
+
+/* ---------- start screen ---------- */
+.hero{color:#fff;text-align:center;padding:26px 10px 8px}
+.hero h1{font-size:44px;margin:0 0 6px}
+.hero p{max-width:720px;margin:0 auto 6px;color:#d8dcf5;font-size:18px}
+.sites{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin:22px auto;max-width:860px}
+.site{background:var(--card);border-radius:24px;padding:18px;text-align:left;border:4px solid transparent;transition:.15s;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.site:hover{transform:translateY(-3px);border-color:#ffd166}
+.site h2{margin:6px 0 4px;font-size:28px}
+.site ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
+.site .go{margin-top:14px;width:100%;padding:12px;border:0;border-radius:14px;font-size:19px;font-weight:800;color:#fff;font-family:Fredoka,Nunito,system-ui,sans-serif}
+.site.moon .go{background:#4b5bdc}.site.mars .go{background:#d9572b}
+.mini{width:100%;height:120px;border-radius:14px;display:block}
+.howto{max-width:860px;margin:0 auto;background:rgba(255,255,255,.08);color:#e9ecff;border-radius:18px;padding:14px 18px}
+.howto b{color:#ffd166}
+.foot{color:#aab0d6;font-size:13px;text-align:center;margin:18px 0 6px}
+.foot a{color:#cfd5ff}
+
+/* ---------- game ---------- */
+.scene{width:100%;border-radius:var(--radius);display:block;box-shadow:0 10px 30px rgba(0,0,0,.3);background:#000}
+.grid{display:grid;grid-template-columns:1fr 1.25fr;gap:14px;margin-top:14px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.grid>.statuscard{order:2}}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.card h3{margin:0 0 10px;font-size:21px}
+.stat{margin-bottom:12px}
+.stat .head{display:flex;justify-content:space-between;align-items:baseline;font-weight:800}
+.stat .head small{font-weight:700;color:var(--muted)}
+.bar{height:18px;background:#eef0f8;border-radius:999px;overflow:hidden;position:relative;margin-top:4px}
+.bar i{display:block;height:100%;border-radius:999px;transition:width .4s}
+.bar .ghost{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,rgba(0,0,0,.12) 0 6px,transparent 6px 12px);border-radius:999px}
+.bar .limit{position:absolute;top:-2px;bottom:-2px;width:3px;background:#1d2340}
+.delta{font-size:14px;font-weight:800;margin-left:6px}
+.up{color:#14a44d}.down{color:#e5484d}
+.layers{display:flex;gap:5px;margin-top:5px}
+.layers b{width:34px;height:16px;border-radius:5px;background:#eef0f8}
+.layers b.on{background:var(--shield)}
+.layers b.new{background:repeating-linear-gradient(45deg,var(--shield) 0 5px,#cfc3ff 5px 10px)}
+.sciinfo{display:none;font-size:13.5px;color:#465;background:#f3f6ff;border-left:4px solid #8aa2ff;padding:6px 8px;border-radius:8px;margin-top:5px;color:#30365a}
+body.sci .sciinfo{display:block}
+.forecast{font-size:14px;font-weight:800;background:#fff6db;color:#7a5600;border-radius:10px;padding:6px 10px;margin-bottom:10px}
+
+/* event card */
+.event{border:3px solid #ffd166;background:#fffaf0}
+.event .ehead{display:flex;gap:12px;align-items:flex-start}
+.event .icon{font-size:42px;line-height:1}
+.event h3{margin:2px 0 4px}
+.realtag{display:inline-block;background:#1d2340;color:#ffd166;font-size:12px;font-weight:800;border-radius:6px;padding:2px 7px;margin-right:4px;vertical-align:middle}
+.realtag.live{background:#e5484d;color:#fff}
+.fact{background:#eef6ff;border-radius:12px;padding:8px 10px;margin-top:8px;font-size:15px}
+.fact b{color:#1f5fbf}
+.choices{display:grid;gap:8px;margin-top:10px}
+.choice{text-align:left;border:2px solid #d9dcef;background:#fff;border-radius:14px;padding:10px 12px;font-size:16px;font-weight:800;color:var(--ink)}
+.choice small{display:block;font-weight:600;color:var(--muted);font-size:14px}
+.choice:hover:not(:disabled){border-color:#4b5bdc;background:#f4f6ff}
+.choice:disabled{opacity:.45;cursor:not-allowed}
+.chosen{margin-top:10px;font-weight:800;color:#14a44d}
+
+/* planner */
+.planner{margin-top:14px}
+.prow{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.prow .lbl{font-weight:800}
+.prow .lbl small{display:block;font-weight:600;color:var(--muted);font-size:13.5px}
+.pm{width:42px;height:42px;border-radius:12px;border:0;font-size:24px;font-weight:800;color:#fff;background:#4b5bdc}
+.pm:disabled{background:#c8cbe0;cursor:not-allowed}
+.cnt{min-width:64px;text-align:center;font-family:Fredoka,Nunito,system-ui,sans-serif;font-size:22px}
+.cnt small{display:block;font-size:12px;color:var(--muted);font-family:Nunito;font-weight:700}
+.power{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:#1d2340;color:#fff;border-radius:14px;padding:10px 12px;margin-bottom:6px;font-weight:700}
+.power .bolt{font-family:Fredoka,Nunito,system-ui,sans-serif;font-size:26px;color:#ffd166}
+.waste{color:#ffb4a3}
+.rovy{display:flex;gap:10px;align-items:flex-start;margin-top:12px}
+.rovy .bot{font-size:36px}
+.bubble{background:#eef0ff;border-radius:14px;padding:9px 12px;font-weight:700;flex:1}
+.endday{width:100%;margin-top:12px;padding:14px;border:0;border-radius:16px;background:#14a44d;color:#fff;font-size:21px;font-weight:700;font-family:Fredoka,Nunito,system-ui,sans-serif}
+.endday:disabled{background:#b9c0d8;cursor:not-allowed}
+.report{margin-top:10px;font-size:14.5px;color:var(--muted);font-weight:700}
+
+/* end screen */
+.endcard{max-width:900px;margin:10px auto}
+.result{text-align:center}
+.result h1{font-size:40px;margin:4px 0}
+.stars{font-size:46px;letter-spacing:6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.kpi{background:#f4f6ff;border-radius:14px;padding:10px;text-align:center;font-weight:800}
+.kpi div{font-family:Fredoka,Nunito,system-ui,sans-serif;font-size:26px}
+.lessons li{margin-bottom:6px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.btn{border:0;border-radius:14px;padding:12px 18px;font-size:18px;font-weight:700;font-family:Fredoka,Nunito,system-ui,sans-serif;color:#fff;background:#4b5bdc}
+.btn.alt{background:#d9572b}.btn.ghost{background:#eef0ff;color:#1d2340}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(5,8,25,.7);display:flex;align-items:center;justify-content:center;padding:14px;z-index:20}
+.modal-card{background:#fff;border-radius:20px;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:20px 22px;position:relative}
+.modal-card h2{margin-top:0}
+.close{position:absolute;right:12px;top:10px;border:0;background:#eef0ff;border-radius:10px;width:36px;height:36px;font-size:18px;font-weight:800}
+.src{border-bottom:1px solid var(--line);padding:10px 0}
+.src b{display:block}
+.src small{color:var(--muted)}
+.ok{color:#14a44d;font-weight:800}.bad{color:#e5484d;font-weight:800}
+table.fl{border-collapse:collapse;width:100%;margin-top:8px}
+table.fl td,table.fl th{border-bottom:1px solid var(--line);padding:6px;text-align:left}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1d2340;color:#fff;padding:10px 16px;border-radius:14px;font-weight:800;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:opacity .4s}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">🚀 Outpost <span>30</span></div>
+    <div class="pill hidden" id="sitePill"></div>
+    <div class="pill hidden" id="dayPill"></div>
+    <div class="spacer"></div>
+    <button class="tbtn on" id="btnSound" title="Sound on/off">🔊 Sound</button>
+    <button class="tbtn" id="btnSci" title="Show the real numbers behind the game">🔬 Show me the science</button>
+    <button class="tbtn" id="btnLive">📡 Live space weather</button>
+    <button class="tbtn" id="btnData">📚 Data sources</button>
+    <button class="tbtn" id="btnTeach">👩‍🏫 Teachers &amp; parents</button>
+  </div>
+
+  <!-- START -->
+  <section id="startScreen">
+    <div class="hero">
+      <h1>Can you keep your crew safe for 30 days?</h1>
+      <p>You are the Commander of a new space outpost. Every day you get power from the Sun. Split it between <b>air</b>, <b>food</b>, <b>shields</b> and <b>science</b>. No choice is free, just like for real NASA mission planners!</p>
+    </div>
+    <div class="sites">
+      <div class="site moon">
+        <svg class="mini" id="miniMoon" viewBox="0 0 400 120"></svg>
+        <h2>🌕 Moon Base</h2>
+        <div>Near the Moon's south pole</div>
+        <ul>
+          <li>Lots of sunlight, but <b>dark spells</b> (you can see them coming)</li>
+          <li>No air at all, so <b>radiation is high</b></li>
+          <li>Earth is only 1.3 light-seconds away</li>
+        </ul>
+        <button class="go" data-site="moon">Start Moon mission ▶</button>
+      </div>
+      <div class="site mars">
+        <svg class="mini" id="miniMars" viewBox="0 0 400 120"></svg>
+        <h2>🔴 Mars Base</h2>
+        <div>In Jezero Crater, Mars</div>
+        <ul>
+          <li>Less sunlight and surprise <b>dust storms</b></li>
+          <li>Thin air gives a <b>little</b> radiation protection</li>
+          <li>Messages to Earth take <b>minutes</b></li>
+        </ul>
+        <button class="go" data-site="mars">Start Mars mission ▶</button>
+      </div>
+    </div>
+    <div class="howto">
+      <b>How to play:</b> 1) Read the news card and pick what to do. 2) Use <b>+</b> and <b>−</b> to share out today's ⚡ power. 3) Press <b>End Day</b>. Leftover power is saved in the battery.
+      Lose if <b>air</b> or <b>food</b> runs out, or the crew's <b>radiation dose</b> goes over the limit. Every event is based on <b>real NASA science</b>. Tap 📚 to see where it comes from.
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="gameScreen" class="hidden">
+    <svg class="scene" id="scene" viewBox="0 0 800 250" role="img" aria-label="Your outpost"></svg>
+    <div class="grid">
+      <div class="card statuscard">
+        <h3>📊 Outpost status</h3>
+        <div id="forecast"></div>
+        <div id="stats"></div>
+      </div>
+      <div>
+        <div class="card event" id="eventCard"></div>
+        <div class="card planner">
+          <h3>⚡ Share out today's power</h3>
+          <div class="power" id="powerBox"></div>
+          <div id="rows"></div>
+          <div class="rovy"><div class="bot">🤖</div><div class="bubble" id="tip"></div></div>
+          <button class="endday" id="endDay">End Day ▶</button>
+          <div class="report" id="report"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section id="endScreen" class="hidden">
+    <div class="card endcard" id="endCard"></div>
+  </section>
+
+  <div class="foot">Made for the 2026 NASA Space Apps Challenge: “Build a Junior Astronaut Mission Trainer”. Not an official NASA product, and NASA does not endorse it.
+    Real data from NASA DONKI, NASA OSDR / RadLab, NASA Curiosity RAD, NASA-STD-3001 and the CSA. Tap 📚 for details.</div>
+</div>
+
+<div class="modal hidden" id="modal"><div class="modal-card"><button class="close" id="modalClose" aria-label="Close">✕</button><div id="modalBody"></div></div></div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+/* =========================================================
+   OUTPOST 30 – game rules (all tunable in one place)
+   ========================================================= */
+const DAYS = 30;
+const DOSE_BUDGET = 75;          // mSv – game mission limit (real NASA career limit: 600 mSv)
+const BATTERY_MAX = 12;
+const AIR_USE = 12, AIR_PER = 4; // crew of 4 breathes 12 "air" a day; 1 ⚡ makes 4 air
+const FOOD_USE = 6, FOOD_PER = 4, GROW_DAYS = 3;
+const SHIELD_COST = 3, SHIELD_MAX = 5;
+// Shield layers (regolith + water walls). Solar particles are stopped well; cosmic rays much less.
+const GCR_F = [1, .9, .8, .72, .66, .6];
+const SEP_F = [1, .6, .38, .25, .16, .1];
+const STORM_MSV_PER_X = 5;       // game estimate: unshielded storm dose on the Moon per X-class unit
+const NASA_API_KEY = "DEMO_KEY"; // replace with your free key from api.nasa.gov
+
+const SITES = {
+  moon:{key:"moon", name:"Moon Base", emoji:"🌕", place:"near the Moon's south pole", dayWord:"Day", days:"days",
+    gcr:1.369, gcrSrc:"Moon surface rate measured by the Chang'e-4 lander's LND instrument (2019–20). It agrees with NASA's LRO/CRaTER data.",
+    sepMul:1, shelterF:.15, sciGoal:90, solar:12, lowSolar:3, lowLen:5, lowName:"Dark spell", lowIcon:"🌑", forecastable:true,
+    delayText:"about 1.3 seconds", gravity:"1/6 of Earth's"},
+  mars:{key:"mars", name:"Mars Base", emoji:"🔴", place:"in Jezero Crater, Mars", dayWord:"Sol", days:"sols",
+    gcr:0.67, gcrSrc:"Mars surface rate measured by NASA's Curiosity rover, RAD instrument (Hassler et al., Science, 2013).",
+    sepMul:.35, shelterF:.3, sciGoal:70, solar:9, lowSolar:3, lowLen:4, lowName:"Dust storm", lowIcon:"🌪️", forecastable:false,
+    delayText:"between 3 and 22 minutes", gravity:"about 1/3 of Earth's"}
+};
+
+/* Real solar flares, archived from NASA (DONKI / Solar Dynamics Observatory). */
+const FLARES = [
+  {date:"10 May 2024", cls:"X5.8", strength:5.8, note:"Part of the giant May 2024 solar storm. It was the strongest storm to reach Earth since 2003, and people saw auroras very far south."},
+  {date:"14 May 2024", cls:"X8.7", strength:8.7, note:"NASA's Solar Dynamics Observatory saw it. It was the biggest flare of this solar cycle at the time."},
+  {date:"1 Oct 2024",  cls:"X7.1", strength:7.1, note:"It came just two days before an even bigger flare!"},
+  {date:"3 Oct 2024",  cls:"X9.0", strength:9.0, note:"NASA called it the largest flare of Solar Cycle 25 when it happened."},
+  {date:"4 Aug 1972",  cls:"Very large storm", strength:14, note:"This famous storm hit between the Apollo 16 and Apollo 17 Moon missions. Luckily, no astronauts were on the Moon that day."}
+];
+let liveFlares = [];      // filled from DONKI if the live call works
+let useLive = false;
+
+const FACTS = {
+  moon:[
+    "One full day-and-night on the Moon lasts about <b>29.5 Earth days</b>.",
+    "Moon gravity is <b>1/6 of Earth's</b>. A jump here would go much higher!",
+    "Radiation on the Moon's surface is about <b>2.6 times higher</b> than on the Space Station (measured by the Chang'e-4 lander, 2019).",
+    "NASA's <b>Artemis</b> missions plan to land astronauts near the Moon's south pole.",
+    "The Moon has <b>no air</b>, so nothing blocks radiation or tiny space rocks."],
+  mars:[
+    "A day on Mars is called a <b>sol</b>. It is 24 hours and 39 minutes long.",
+    "Mars gets <b>less than half</b> the sunlight Earth gets, because it is farther from the Sun.",
+    "NASA's Curiosity rover measured Mars surface radiation: about <b>0.67 mSv per day</b>. That is about half the Moon's level, because Mars's thin air and the planet itself block some of it.",
+    "Mars gravity is <b>about 1/3 of Earth's</b>.",
+    "A radio message from Mars to Earth takes <b>3 to 22 minutes</b>, depending on where the two planets are."],
+  both:[
+    "In 2015, astronauts on the Space Station ate lettuce they grew in NASA's <b>Veggie</b> space garden.",
+    "Plants need light, water and warmth. On an outpost, <b>all three cost power</b> (CSA “Food production on the Moon” toolkit).",
+    "NASA's rule: an astronaut's radiation dose over their <b>whole career</b> must stay under <b>600 mSv</b>.",
+    "<b>mSv</b> (millisievert) measures radiation dose to the body. People on Earth get about 2–3 mSv in a whole <b>year</b>.",
+    "On the Space Station, crews get about <b>0.5 mSv a day</b>. NASA's RadLab database stores these real readings."]
+};
+
+
+/* =========================================================
+   sound effects (made live with Web Audio, no files needed)
+   ========================================================= */
+const SFX = {
+  ctx:null, on:true,
+  ac(){
+    if(!this.ctx){ try{ this.ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+    if(this.ctx.state==="suspended") this.ctx.resume().catch(()=>{});
+    return this.ctx;
+  },
+  tone(f, dur, type="sine", vol=.12, at=0, slide=null){
+    const c=this.ac(); if(!c) return; const t=c.currentTime+at;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide, t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+.05);
+  },
+  noise(dur, vol=.15, freq=800, at=0, q=1, sweepTo=null){
+    const c=this.ac(); if(!c) return; const t=c.currentTime+at;
+    const len=Math.floor(c.sampleRate*dur), buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    const src=c.createBufferSource(); src.buffer=buf;
+    const fl=c.createBiquadFilter(); fl.type="bandpass"; fl.frequency.setValueAtTime(freq,t); fl.Q.value=q;
+    if(sweepTo) fl.frequency.exponentialRampToValueAtTime(sweepTo,t+dur);
+    const g=c.createGain(); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+dur*.2); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    src.connect(fl).connect(g).connect(c.destination); src.start(t); src.stop(t+dur+.05);
+  },
+  play(name){
+    if(!this.on) return;
+    try{
+      const T=(...a)=>this.tone(...a), N=(...a)=>this.noise(...a);
+      switch(name){
+        case "plus":   T(660,.07,"square",.05); break;
+        case "minus":  T(440,.07,"square",.05); break;
+        case "shield": T(140,.25,"triangle",.25); N(.18,.12,300); T(220,.15,"triangle",.12,.08); break;
+        case "choose": T(523,.09,"triangle",.12); T(784,.14,"triangle",.12,.08); break;
+        case "endday": T(300,.25,"sine",.12,0,700); N(.3,.05,1500,0,1,3000); break;
+        case "start":  [392,523,659,784].forEach((f,i)=>T(f,.18,"triangle",.13,i*.1)); break;
+        case "storm":  for(let i=0;i<4;i++){ T(620,.2,"sawtooth",.07,i*.4,950); T(950,.2,"sawtooth",.07,i*.4+.2,620); } break;
+        case "dark":   T(420,.9,"sine",.14,0,110); T(630,.9,"sine",.06,0,165); break;
+        case "dust":   N(1.6,.22,400,0,.8,1400); N(1.2,.12,900,.4,1,300); break;
+        case "devil":  N(.8,.15,600,0,2,2400); [784,988,1175].forEach((f,i)=>T(f,.15,"sine",.1,.5+i*.09)); break;
+        case "meteor": T(1400,.35,"sine",.08,0,200); N(.3,.3,500,.3,.7); T(80,.3,"triangle",.3,.3); break;
+        case "leak":   N(1,.12,4000,0,3); break;
+        case "harvest":[880,1175,1568].forEach((f,i)=>T(f,.2,"sine",.1,i*.08)); break;
+        case "warn":   T(880,.12,"square",.07); T(880,.12,"square",.07,.2); break;
+        case "call":   T(440,.15,"sine",.1); T(480,.15,"sine",.1); T(440,.15,"sine",.1,.3); T(480,.15,"sine",.1,.3); break;
+        case "win":    [523,659,784,1047,784,1047].forEach((f,i)=>T(f,i>3?.4:.16,"triangle",.14,i*.13)); break;
+        case "fail":   [392,330,262,196].forEach((f,i)=>T(f,.3,"triangle",.14,i*.22)); break;
+        case "tick":   T(1000,.04,"sine",.05); break;
+      }
+    }catch(e){}
+  }
+};
+try{ if(localStorage.getItem("outpost30-sound")==="off") SFX.on=false; }catch(e){}
+
+/* =========================================================
+   helpers
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const rand = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const shuffle = arr => { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const r1 = x => Math.round(x*10)/10;
+const clamp = (x,a,b) => Math.max(a,Math.min(b,x));
+
+let S = null;
+
+/* =========================================================
+   schedule
+   ========================================================= */
+function makeSchedule(site){
+  const sch = Array(DAYS+2).fill(null);
+  const lowDays = new Set();
+  sch[1] = {type:"welcome"};
+  const lowStart = rand(8,15);
+  for(let d=lowStart; d<lowStart+site.lowLen && d<=DAYS; d++) lowDays.add(d);
+  sch[lowStart] = {type:"lowstart"};
+  // solar storms (3 per mission)
+  const deck = shuffle(useLive && liveFlares.length ? [...liveFlares, ...FLARES] : FLARES);
+  const free = [];
+  for(let d=3; d<=DAYS-1; d++) if(!sch[d]) free.push(d);
+  const stormDays = shuffle(free).slice(0,3);
+  stormDays.forEach((d,i)=> sch[d] = {type:"storm", flare: deck[i % deck.length]});
+  // other events
+  const pool = ["meteor","devil","mold","exercise","explore","leak","call"].filter(k=>EVENTS[k].sites.includes(site.key));
+  let last = "";
+  for(let d=2; d<=DAYS; d++){
+    if(sch[d]) continue;
+    if(Math.random() < .6){
+      let k; do{ k = pick(pool); }while(k===last && pool.length>1);
+      sch[d] = {type:k}; last = k;
+    } else sch[d] = {type:"quiet"};
+  }
+  return {sch, lowDays, lowStart};
+}
+
+/* =========================================================
+   events: each returns a card + choices
+   ========================================================= */
+function stormDoseEstimate(flare, shelter){
+  const base = flare.strength * STORM_MSV_PER_X * S.site.sepMul * SEP_F[S.shield];
+  return shelter ? base * S.site.shelterF : base;
+}
+const EVENTS = {
+  welcome:{sites:["moon","mars"], make(){ const s=S.site; return {
+    icon:"🚀", title:"Welcome, Commander!",
+    text:`Your crew of 4 just landed ${s.place}. Keep them safe for <b>30 ${s.days}</b>. Each ${s.dayWord.toLowerCase()} the Sun gives you ⚡ power. Share it between <b>Air, Food, Shield and Science</b>. Any power you don't use goes into the battery for later.`,
+    fact:`Real mission planners do this every day: <b>power is limited</b>, so every “yes” to one thing is a “no” to something else.`,
+    choices:[{label:"Let's go! 🚀", apply(){}}]};}},
+
+  lowstart:{sites:["moon","mars"], make(){ const s=S.site; return s.key==="moon" ? {
+    icon:"🌑", title:`Dark spell begins! (${s.lowLen} days)`,
+    text:`The Sun sinks behind the crater hills. Solar power drops from <b>${s.solar} ⚡ to ${s.lowSolar} ⚡</b> a day until it comes back. Use your battery wisely!`,
+    fact:`At the Moon's south pole, some high ridges get sunlight most of the time, but they still have dark spells. In other places on the Moon, night lasts about <b>14 Earth days</b>! (We made it shorter for the game.)`,
+    real:"Real science", choices:[{label:"Switch to battery mode 🔋", apply(){}}]} : {
+    icon:"🌪️", title:`Dust storm! (${s.lowLen} sols)`,
+    text:`Dust fills the sky and blocks the Sun. Solar power drops from <b>${s.solar} ⚡ to ${s.lowSolar} ⚡</b> a sol until it clears.`,
+    fact:`<b>Real story:</b> in June 2018, a planet-wide dust storm cut NASA's Opportunity rover from about 300 Wh to just 22 Wh of power a day. It fell asleep and never woke up. Mars dust storms are very hard to predict.`,
+    real:"Real NASA event", choices:[{label:"Hold on tight 💪", apply(){}}]};}},
+
+  storm:{sites:["moon","mars"], make(ev){ const f=ev.flare, s=S.site;
+    const shel = stormDoseEstimate(f,true), work = stormDoseEstimate(f,false);
+    const delay = s.key==="mars" ? rand(5,20) : 0;
+    const marsNote = s.key==="mars" ? ` The warning from Earth took <b>${delay} minutes</b> to arrive, so the crew gets a little more radiation before they reach the shelter.` : "";
+    return {
+    icon:"☀️", title:"SOLAR STORM ALERT!", live:f.live,
+    text:`A ${f.cls} solar flare is sending a burst of fast particles our way! Today's shields: <b>${S.shield} layer${S.shield===1?"":"s"}</b>.${marsNote}`,
+    fact:`<b>Real event (${f.date}, ${f.cls}):</b> ${f.note} Big flares often come with “solar particle storms” that are dangerous to astronauts. Shields and storm shelters stop most of these particles.`,
+    real: f.live ? "LIVE from NASA DONKI" : "Real NASA data",
+    choices:[
+      {label:"🏠 Everyone into the storm shelter", note:`About ${r1(shel)} mSv extra · No science today`, apply(t){ t.sheltered=true; t.noSci=true; S.alloc.sci=0; t.storm=f; }},
+      {label:"🔧 Keep working outside", note:`About ${r1(work)} mSv extra · +3 bonus science`, apply(t){ t.storm=f; t.sciBonus+=3; }}
+    ]};}},
+
+  meteor:{sites:["moon"], make(){ return {
+    icon:"☄️", title:"A tiny space rock hit a solar panel!",
+    text:"One panel is cracked. Fix it now, or keep going and lose some power.",
+    fact:"The Moon has <b>no air</b> to burn up space rocks, so even dust-sized bits hit the ground very fast. Engineers design outposts to handle these hits.",
+    choices:[
+      {label:"🔧 Fix it now", note:"Costs 3 ⚡ today", cost:3, apply(t){ t.extraCost+=3; }},
+      {label:"⏳ Fix it later", note:"−4 ⚡ power for the next 3 days", apply(){ for(let d=S.day+1; d<=S.day+3; d++) S.dmgDays.add(d); }}
+    ]};}},
+
+  devil:{sites:["mars"], make(){ return {
+    icon:"🌀", title:"A dust devil cleaned your solar panels!",
+    text:"A whirlwind blew the dust off. You get <b>+3 ⚡</b> today!",
+    fact:"<b>Real story:</b> NASA's Spirit and Opportunity rovers were saved many times when dust devils blew their dusty solar panels clean.",
+    real:"Real NASA event", choices:[{label:"Yay, thanks Mars! 🎉", apply(t){ t.solar+=3; }}]};}},
+
+  mold:{sites:["moon","mars"], make(){ return {
+    icon:"🍄", title:"Mould in the greenhouse!",
+    text:"The air is too damp and mould is growing on your plants.",
+    fact:"<b>Real story:</b> in 2016, zinnia flowers on the Space Station got mouldy. Astronaut Scott Kelly dried them with a fan, and they bloomed!",
+    real:"Real NASA event",
+    choices:[
+      {label:"🌬️ Run the drying fans", note:"Costs 2 ⚡ today · plants are saved", cost:2, apply(t){ t.extraCost+=2; }},
+      {label:"🤷 Do nothing", note:"Lose half of the food that is still growing", apply(){ S.growing.forEach(g=>g.amt=Math.floor(g.amt/2)); }}
+    ]};}},
+
+  exercise:{sites:["moon","mars"], make(){ const s=S.site; return {
+    icon:"🏃", title:"Exercise time!",
+    text:"The crew doctor wants everyone on the treadmill today. Exercise machines use power.",
+    fact:`In space, astronauts can lose about <b>1–1.5% of their bone strength each month</b> unless they exercise. NASA keeps this research in its Open Science Data Repository (<b>OSDR</b>). Gravity here is ${s.gravity}, and scientists are still learning how much exercise is needed.`,
+    real:"NASA OSDR",
+    choices:[
+      {label:"💪 Treadmill time", note:"Costs 2 ⚡ today", cost:2, apply(t){ t.extraCost+=2; }},
+      {label:"🛋️ Skip it", note:"Crew gets tired and slow: −3 science", apply(t){ t.sciBonus-=3; }}
+    ]};}},
+
+  explore:{sites:["moon","mars"], make(){ const s=S.site, moon=s.key==="moon"; return {
+    icon: moon?"🧊":"🪨", title: moon?"Ice spotted in a shadowy crater!":"Strange rocks found nearby!",
+    text:"This could be a big discovery. Who should go and look?",
+    fact: moon ? "Scientists think the dark craters at the Moon's south pole hold <b>water ice</b>. Ice could give future crews water, air and even rocket fuel."
+               : "NASA's Perseverance rover collects rock samples in <b>Jezero Crater</b>, an old lake bed, looking for signs of ancient life.",
+    choices:[
+      {label:"👩‍🚀 Send an astronaut outside", note:`+6 science · ${r1(s.gcr)} mSv extra · −8 air (spacesuit)`, apply(t){ t.sciBonus+=6; t.doseExtra+=s.gcr; t.airDelta-=8; }},
+      {label:"🤖 Send the robot rover", note:"+3 science · costs 2 ⚡", cost:2, apply(t){ t.sciBonus+=3; t.extraCost+=2; }},
+      {label:"🙅 Not today", note:"Nothing happens, and no discovery", apply(){}}
+    ]};}},
+
+  leak:{sites:["moon","mars"], make(){ return {
+    icon:"💨", title:"Small air leak!",
+    text:"A tiny hole is letting air escape. Patch it now, or lose some air.",
+    fact:"<b>Real story:</b> in 2020, Space Station astronauts hunted for a tiny air leak. They found it by watching <b>floating tea leaves</b> drift toward the hole!",
+    real:"Real NASA event",
+    choices:[
+      {label:"🩹 Patch it now", note:"Costs 2 ⚡ today", cost:2, apply(t){ t.extraCost+=2; }},
+      {label:"⏳ Wait", note:"Lose 10 air", apply(t){ t.airDelta-=10; }}
+    ]};}},
+
+  call:{sites:["moon","mars"], make(){ const s=S.site, moon=s.key==="moon", m=rand(4,20); return {
+    icon:"📞", title:"Time to call home!",
+    text: moon ? "The crew wants to talk to their families. Radio signals reach Earth in about <b>1.3 seconds</b>, almost like a normal phone call."
+               : `The crew wants to talk to their families. Today a message takes <b>${m} minutes</b> to reach Earth, and ${m} more for the reply. So no live chats: they send video letters instead.`,
+    fact: moon ? "This is why Moon astronauts can get help from Mission Control right away."
+               : "Because of this delay, a Mars crew must solve many problems <b>on their own</b>. They can't wait for Mission Control.",
+    choices:[
+      {label: moon?"📹 Video call home":"📼 Record video letters", note:"Costs 1 ⚡ · happy crew works better: +2 science", cost:1, apply(t){ t.extraCost+=1; t.sciBonus+=2; }},
+      {label:"🔕 Not today", note:"Save the power", apply(){}}
+    ]};}},
+
+  quiet:{sites:["moon","mars"], make(){ return {
+    icon:"🌤️", title:"A quiet day at the outpost",
+    text:"No surprises today. Good time to build shields or do science!",
+    fact:"<b>Did you know?</b> " + pick([...FACTS[S.site.key], ...FACTS.both]),
+    choices:[{label:"OK 👍", apply(){}}]};}}
+};
+
+/* =========================================================
+   game flow
+   ========================================================= */
+function newGame(siteKey){
+  const site = SITES[siteKey];
+  S = {site, day:1, air:70, food:50, battery:6, shield:0, dose:0, sci:0, growing:[],
+       dmgDays:new Set(), hist:[{day:0, air:70, food:50, dose:0, sci:0}], seen:new Set(),
+       alloc:{air:3, food:2, shield:0, sci:0}, today:null, lastReport:""};
+  const m = makeSchedule(site);
+  S.sch = m.sch; S.lowDays = m.lowDays; S.lowStart = m.lowStart;
+  show("game");
+  SFX.play("start");
+  startDay();
+}
+
+function solarFor(day){
+  let p = S.lowDays.has(day) ? S.site.lowSolar : S.site.solar;
+  if(S.dmgDays.has(day)) p = Math.max(1, p-4);
+  return p;
+}
+
+function startDay(){
+  let ev = S.sch[S.day] || {type:"quiet"};
+  if(ev.type==="mold" && S.growing.reduce((a,g)=>a+g.amt,0)===0) ev = {type:"quiet"};
+  const card = EVENTS[ev.type].make(ev);
+  S.seen.add(ev.type);
+  const evSound = {storm:"storm", lowstart:S.site.key==="moon"?"dark":"dust", devil:"devil", meteor:"meteor", leak:"leak", call:"call"}[ev.type];
+  if(evSound) setTimeout(()=>SFX.play(evSound), 250);
+  S.today = {ev, card, solar:solarFor(S.day), chosen:false, choiceLabel:"", sheltered:false, noSci:false,
+             extraCost:0, airDelta:0, sciBonus:0, doseExtra:0, storm:null};
+  fitAlloc();
+  render();
+}
+
+function available(){ return S.battery + S.today.solar - S.today.extraCost; }
+function used(a=S.alloc){ return a.air + a.food + a.shield*SHIELD_COST + a.sci; }
+function fitAlloc(){
+  const a = S.alloc;
+  if(S.today.noSci) a.sci = 0;
+  a.shield = Math.min(a.shield, SHIELD_MAX - S.shield);
+  const order = ["sci","shield","food","air"];
+  while(used() > available()){
+    const k = order.find(k=>a[k]>0); if(!k) break; a[k]--;
+  }
+}
+
+function choose(i){
+  const c = S.today.card.choices[i];
+  SFX.play("choose");
+  c.apply(S.today);
+  S.today.chosen = true; S.today.choiceLabel = c.label;
+  fitAlloc(); render();
+}
+
+function calc(){
+  const t=S.today, a=S.alloc, s=S.site;
+  const left = available() - used();
+  const battery = Math.min(BATTERY_MAX, left), wasted = Math.max(0, left-BATTERY_MAX);
+  const air = Math.min(100, S.air + a.air*AIR_PER - AIR_USE + t.airDelta);
+  const arrive = S.growing.filter(g=>g.day<=S.day).reduce((x,g)=>x+g.amt,0);
+  const food = Math.min(100, S.food - FOOD_USE + arrive);
+  const shield = S.shield + a.shield;
+  const gcrDose = s.gcr * GCR_F[shield];
+  let stormDose = 0;
+  if(t.storm){ stormDose = t.storm.strength*STORM_MSV_PER_X*s.sepMul*SEP_F[shield]*(t.sheltered? s.shelterF:1); }
+  const dayDose = gcrDose + stormDose + t.doseExtra;
+  const sci = Math.max(0, S.sci + (t.noSci?0:a.sci) + t.sciBonus);
+  return {battery, wasted, air, food, arrive, shield, gcrDose, stormDose, dayDose, dose:S.dose+dayDose, sci};
+}
+
+function endDay(){
+  if(!S.today.chosen) return;
+  const c = calc(), a=S.alloc, prev={air:S.air, food:S.food};
+  SFX.play("endday");
+  if(c.arrive) setTimeout(()=>SFX.play("harvest"), 300);
+  S.battery=c.battery; S.air=c.air; S.food=c.food; S.shield=c.shield; S.dose=c.dose; S.sci=c.sci;
+  S.growing = S.growing.filter(g=>g.day>S.day);
+  if(a.food>0) S.growing.push({day:S.day+GROW_DAYS, amt:a.food*FOOD_PER});
+  S.hist.push({day:S.day, air:Math.max(0,S.air), food:Math.max(0,S.food), dose:S.dose, sci:S.sci});
+  const dw = S.site.dayWord;
+  S.lastReport = `${dw} ${S.day}: Air ${fmtD(S.air-prev.air)}, Food ${fmtD(S.food-prev.food)}${c.arrive?` (harvest +${c.arrive})`:""}, Radiation +${r1(c.dayDose)} mSv${c.wasted?`, ${c.wasted} ⚡ wasted (battery full)`:""}.`;
+  if(S.air<=0) return finish("air");
+  if(S.food<=0) return finish("food");
+  if(S.dose>=DOSE_BUDGET) return finish("dose");
+  S.day++;
+  if(S.day>DAYS) return finish("win");
+  toast(S.lastReport);
+  startDay();
+  if(/^⚠️/.test(rovyTip(calc())) && S.today.chosen===false && (S.air<=30 || S.food<=18 || S.dose>DOSE_BUDGET*.7)) setTimeout(()=>SFX.play("warn"), 700);
+}
+const fmtD = d => (d>=0?"+":"")+d;
+
+/* =========================================================
+   rendering
+   ========================================================= */
+function show(which){
+  $("#startScreen").classList.toggle("hidden", which!=="start");
+  $("#gameScreen").classList.toggle("hidden", which!=="game");
+  $("#endScreen").classList.toggle("hidden", which!=="end");
+  $("#sitePill").classList.toggle("hidden", which==="start");
+  $("#dayPill").classList.toggle("hidden", which!=="game");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function render(){
+  const s=S.site, t=S.today, c=calc();
+  $("#sitePill").textContent = `${s.emoji} ${s.name}`;
+  $("#dayPill").textContent = `${s.dayWord} ${S.day} / ${DAYS}`;
+  drawScene($("#scene"), s.key, {low:S.lowDays.has(S.day), storm:t.ev.type==="storm", shield:c.shield, growing:S.growing.length + (S.alloc.food>0?1:0), dmg:S.dmgDays.has(S.day), day:S.day});
+
+  // forecast (Moon dark spells are predictable; Mars dust storms are not)
+  let fc = "";
+  const until = S.lowStart - S.day;
+  if(s.forecastable && until>0 && until<=4) fc = `🌑 Forecast: a dark spell starts in ${until} day${until>1?"s":""}. Save battery!`;
+  if(S.lowDays.has(S.day)) fc = `${s.lowIcon} ${s.lowName}: solar power is low (${t.solar} ⚡ today).`;
+  $("#forecast").innerHTML = fc ? `<div class="forecast">${fc}</div>` : "";
+
+  // stats
+  const grow = S.growing.reduce((x,g)=>x+g.amt,0) + S.alloc.food*FOOD_PER;
+  $("#stats").innerHTML =
+    statBar("🫁 Air", S.air, c.air, 100, "var(--air)", `The crew breathes ${AIR_USE} a ${s.dayWord.toLowerCase()}`,
+      `Life support makes oxygen and cleans the air. Game rule: crew of 4 uses ${AIR_USE} units a ${s.dayWord.toLowerCase()}; 1 ⚡ makes ${AIR_PER}. Real crews use about 0.84 kg of oxygen per person per day.`) +
+    statBar("🥕 Food", S.food, c.food, 100, "var(--food)", `Eat ${FOOD_USE} a ${s.dayWord.toLowerCase()} · ${grow} growing 🌱`,
+      `Plants take ${GROW_DAYS} ${s.days} to grow in this game (real lettuce takes about a month). Light, water and warmth all cost power (CSA food-production toolkit).`) +
+    statBar("🔋 Battery", S.battery, c.battery, BATTERY_MAX, "var(--bat)", `Max ${BATTERY_MAX} ⚡`,
+      `Solar outposts store energy in batteries for dark spells and dust storms. A full battery can't store more, so extra power is wasted.`) +
+    shieldStat(c) +
+    doseStat(c) +
+    statBar("🔬 Science", S.sci, c.sci, S.site.sciGoal, "var(--sci)", `Goal: ${S.site.sciGoal} for ⭐⭐`,
+      `Science is why we go! But every ⚡ spent on science is not spent on safety. This is the core trade-off mission planners face.`);
+
+  // event card
+  const cd = t.card;
+  $("#eventCard").innerHTML = `
+    <div class="ehead"><div class="icon">${cd.icon}</div><div>
+      <h3>${cd.real?`<span class="realtag ${cd.live?"live":""}">${cd.real}</span>`:""}${cd.title}</h3>
+      <div>${cd.text}</div></div></div>
+    <div class="fact">${cd.fact}</div>
+    ${t.chosen ? `<div class="chosen">✔ You chose: ${t.choiceLabel}</div>` :
+      `<div class="choices">${cd.choices.map((ch,i)=>{
+        const cant = ch.cost && ch.cost > available();
+        return `<button class="choice" data-i="${i}" ${cant?"disabled":""}>${ch.label}${ch.note?`<small>${ch.note}${cant?" · not enough power!":""}</small>`:""}</button>`;}).join("")}</div>`}`;
+  $("#eventCard").querySelectorAll(".choice").forEach(b=>b.onclick=()=>choose(+b.dataset.i));
+
+  // power box
+  const av = available(), us = used(), left = av-us;
+  $("#powerBox").innerHTML = `<span class="bolt">⚡ ${left}</span><span>left to share</span>
+     <span style="opacity:.8">☀️ Sun ${t.solar} + 🔋 Battery ${S.battery}${t.extraCost?` − 🛠 ${t.extraCost}`:""} = ${av}</span>
+     ${c.wasted?`<span class="waste">⚠️ ${c.wasted} ⚡ will be wasted (battery full)</span>`:""}`;
+
+  // rows
+  const rows = [
+    {k:"air", lbl:"🫁 Air (life support)", sub:`1 ⚡ = +${AIR_PER} air`, unit:1},
+    {k:"food", lbl:"🌱 Greenhouse", sub:`1 ⚡ = +${FOOD_PER} food in ${GROW_DAYS} ${s.days}`, unit:1},
+    {k:"shield", lbl:"🛡️ Build shield layer", sub:`${SHIELD_COST} ⚡ = 1 layer (stays forever)`, unit:SHIELD_COST},
+    {k:"sci", lbl:"🔬 Science", sub: t.noSci?"Everyone is in the shelter today":"1 ⚡ = 1 science point", unit:1}
+  ];
+  $("#rows").innerHTML = rows.map(r=>{
+    const v = S.alloc[r.k];
+    const canPlus = t.chosen && left >= r.unit && !(r.k==="sci"&&t.noSci) && !(r.k==="shield" && S.shield+v>=SHIELD_MAX);
+    const shown = r.k==="shield" ? `${v}<small>layer${v===1?"":"s"} · ${v*SHIELD_COST}⚡</small>` : `${v}<small>⚡</small>`;
+    return `<div class="prow"><div class="lbl">${r.lbl}<small>${r.sub}</small></div>
+      <button class="pm" data-k="${r.k}" data-d="-1" ${v>0&&t.chosen?"":"disabled"} aria-label="less">−</button>
+      <div class="cnt">${shown}</div>
+      <button class="pm" data-k="${r.k}" data-d="1" ${canPlus?"":"disabled"} aria-label="more">+</button></div>`;
+  }).join("");
+  $("#rows").querySelectorAll(".pm").forEach(b=>b.onclick=()=>{ const d=+b.dataset.d; S.alloc[b.dataset.k]+=d; SFX.play(d>0?(b.dataset.k==="shield"?"shield":"plus"):"minus"); render(); });
+
+  $("#tip").innerHTML = rovyTip(c);
+  $("#endDay").disabled = !t.chosen;
+  $("#endDay").textContent = S.day===DAYS ? "Finish mission 🏁" : `End ${s.dayWord} ${S.day} ▶`;
+  $("#report").textContent = S.lastReport ? "Yesterday: " + S.lastReport : "";
+}
+
+function statBar(name, now, next, max, color, sub, sci){
+  const d = next-now;
+  const w = clamp(now/max*100,0,100), w2 = clamp(next/max*100,0,100);
+  const ghost = d<0 ? `<span class="ghost" style="left:${w2}%;width:${w-w2}%"></span>` : "";
+  return `<div class="stat"><div class="head"><span>${name} <span class="delta ${d>=0?"up":"down"}">${d?`→ ${Math.max(0,Math.round(next))} (${fmtD(Math.round(d))})`:""}</span></span><small>${Math.round(Math.max(0,now))}/${max} · ${sub}</small></div>
+    <div class="bar"><i style="width:${Math.min(w,d>=0?w2:w2)}%;background:${color}"></i>${ghost}</div><div class="sciinfo">${sci}</div></div>`;
+}
+function shieldStat(c){
+  let html = "";
+  for(let i=0;i<SHIELD_MAX;i++) html += `<b class="${i<S.shield?"on":(i<c.shield?"new":"")}"></b>`;
+  return `<div class="stat"><div class="head"><span>🛡️ Shield layers</span><small>${S.shield}/${SHIELD_MAX} · blocks radiation</small></div>
+    <div class="layers">${html}</div>
+    <div class="sciinfo">Layers of Moon/Mars soil (regolith) and water tanks around the habitat. They block <b>solar storm particles</b> well (now ×${SEP_F[c.shield]}), but <b>cosmic rays</b> are much harder to stop (now ×${GCR_F[c.shield]}). This is a real challenge for NASA.</div></div>`;
+}
+function doseStat(c){
+  const w = clamp(S.dose/DOSE_BUDGET*100,0,100), w2 = clamp(c.dose/DOSE_BUDGET*100,0,100);
+  const col = c.dose > DOSE_BUDGET*.8 ? "#e5484d" : c.dose > DOSE_BUDGET*.5 ? "#ff9f1c" : "var(--dose)";
+  return `<div class="stat"><div class="head"><span>☢️ Radiation dose <span class="delta down">+${r1(c.dayDose)} mSv today</span></span><small>${r1(S.dose)} / ${DOSE_BUDGET} mSv limit</small></div>
+    <div class="bar"><i style="width:${w}%;background:${col}"></i><span class="ghost" style="left:${w}%;width:${w2-w}%;background:${col};opacity:.45"></span></div>
+    <div class="sciinfo">Today: cosmic rays ${S.site.gcr} mSv/day × shield ${GCR_F[c.shield]} = <b>${r1(c.gcrDose)} mSv</b>${c.stormDose?` + solar storm <b>${r1(c.stormDose)} mSv</b> (game estimate)`:""}.
+      <br>Source: ${S.site.gcrSrc}<br>Game mission limit: ${DOSE_BUDGET} mSv. Real NASA limits: 600 mSv for a whole career, and 250 mSv for one solar storm (NASA-STD-3001).</div></div>`;
+}
+
+function rovyTip(c){
+  const t=S.today, s=S.site;
+  if(!t.chosen) return "First read the news card above and pick what to do!";
+  if(c.air <= 20) return `⚠️ Air will be very low (${Math.max(0,c.air)})! The crew breathes ${AIR_USE} a ${s.dayWord.toLowerCase()}. Put more ⚡ into Air.`;
+  const soon = S.growing.filter(g=>g.day<=S.day+1).reduce((x,g)=>x+g.amt,0);
+  if(c.food <= 14 && soon < FOOD_USE) return `⚠️ Food is running low! Plants take ${GROW_DAYS} ${s.days} to grow, so plant now for later.`;
+  if(c.dose > DOSE_BUDGET*.75) return "⚠️ Radiation dose is getting close to the limit. Build shields and use the shelter in storms!";
+  if(s.forecastable && S.lowStart-S.day>0 && S.lowStart-S.day<=3 && c.battery < 9) return "🌑 A dark spell is coming! Save some ⚡ in the battery to keep the air running.";
+  if(c.wasted) return "Your battery is full, so extra power will be wasted. Spend it on Science or a Shield layer!";
+  if(S.shield===0 && c.shield===0 && S.day>=3) return "Tip: shield layers protect your crew for the <b>whole mission</b>. Solar storms can come any day!";
+  if(c.sci < S.day && S.day>5) return "Your crew is safe. Can you spare some ⚡ for science? That's why we came!";
+  return "Looking good, Commander! Press <b>End Day</b> when you're ready.";
+}
+
+/* =========================================================
+   scene art (SVG)
+   ========================================================= */
+function drawScene(svg, site, o){
+  const moon = site==="moon";
+  const W=800, H=250;
+  let g = `<defs>
+    <linearGradient id="sky${site}" x1="0" y1="0" x2="0" y2="1">${moon?
+      `<stop offset="0" stop-color="#03040c"/><stop offset="1" stop-color="#151a38"/>`:
+      `<stop offset="0" stop-color="#b9774d"/><stop offset="1" stop-color="#e8b88a"/>`}</linearGradient>
+    <radialGradient id="glow${site}"><stop offset="0" stop-color="#fff6b0"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#sky${site})"/>`;
+  if(moon){
+    let seed=7; const rnd=()=>{seed=(seed*9301+49297)%233280; return seed/233280;};
+    for(let i=0;i<70;i++) g+=`<circle cx="${rnd()*W}" cy="${rnd()*150}" r="${rnd()*1.4+.3}" fill="#fff" opacity="${rnd()*.7+.3}"/>`;
+    g += `<circle cx="680" cy="55" r="26" fill="#2f7fd8"/><path d="M664 48 q10 -10 22 -2 q-6 10 -18 8z M672 66 q12 -4 20 4 q-12 6 -20 -4z" fill="#53b36b"/><circle cx="680" cy="55" r="26" fill="none" stroke="#9fd0ff" stroke-width="2" opacity=".6"/>`;
+  } else {
+    g += `<circle cx="660" cy="55" r="14" fill="#fff4d6" opacity=".9"/>`;
+  }
+  g += moon
+    ? `<path d="M0 175 Q120 140 240 170 T480 160 T800 170 V250 H0Z" fill="#7d808c"/><path d="M0 200 Q200 185 400 198 T800 195 V250 H0Z" fill="#9a9da8"/>
+       <ellipse cx="120" cy="225" rx="40" ry="8" fill="#7d808c"/><ellipse cx="610" cy="232" rx="55" ry="9" fill="#7d808c"/>`
+    : `<path d="M0 170 Q140 130 280 165 T560 150 T800 168 V250 H0Z" fill="#a8502c"/><path d="M0 200 Q200 182 400 196 T800 192 V250 H0Z" fill="#c2653a"/>
+       <circle cx="130" cy="228" r="6" fill="#8c3f22"/><circle cx="600" cy="232" r="9" fill="#8c3f22"/>`;
+  // solar panels
+  const pcol = o.low ? "#2a3566" : "#3157d8";
+  for(let i=0;i<3;i++){
+    const x=40+i*70;
+    g += `<line x1="${x+25}" y1="170" x2="${x+25}" y2="200" stroke="#ccc" stroke-width="3"/>
+          <rect x="${x}" y="140" width="52" height="32" rx="3" fill="${pcol}" stroke="#dfe6ff" stroke-width="2" transform="skewX(-8)"/>
+          <line x1="${x+17}" y1="140" x2="${x+12}" y2="172" stroke="#dfe6ff" stroke-width="1" transform="skewX(-8)"/>
+          <line x1="${x+34}" y1="140" x2="${x+29}" y2="172" stroke="#dfe6ff" stroke-width="1" transform="skewX(-8)"/>`;
+  }
+  if(o.dmg) g += `<path d="M112 146 l10 8 l-6 4 l10 9" stroke="#ff5a5a" stroke-width="3" fill="none"/>`;
+  // habitat with shield layers
+  const sh = o.shield, regol = moon ? "#62646e" : "#7a3a1f";
+  for(let i=sh;i>0;i--) g += `<path d="M${300-i*9} 205 A${90+i*9} ${82+i*9} 0 0 1 ${480+i*9} 205" fill="${regol}" opacity="${.55+i*.08}"/>`;
+  g += `<path d="M300 205 A90 82 0 0 1 480 205Z" fill="#eef2ff" stroke="#b9c2e8" stroke-width="3"/>
+        <rect x="372" y="168" width="36" height="37" rx="6" fill="#4b5bdc"/>
+        <circle cx="340" cy="178" r="10" fill="#9ad3ff"/><circle cx="440" cy="178" r="10" fill="#9ad3ff"/>
+        <text x="390" y="150" font-family="Fredoka,Nunito,sans-serif" font-size="16" text-anchor="middle" fill="#1d2340">OUTPOST 30</text>`;
+  // greenhouse
+  g += `<path d="M520 205 A55 48 0 0 1 630 205Z" fill="#bff3cf" opacity=".85" stroke="#58c47c" stroke-width="3"/>`;
+  const plants = Math.min(6, o.growing);
+  for(let i=0;i<plants;i++){ const x=535+i*15; g+=`<path d="M${x} 205 v-14 m0 4 q-7 -6 -10 -1 m10 3 q7 -7 10 -2" stroke="#1f8f45" stroke-width="3" fill="none"/>`; }
+  // rover robot
+  g += `<g transform="translate(675,180)"><rect x="0" y="0" width="44" height="20" rx="5" fill="#ffd166"/><circle cx="9" cy="24" r="7" fill="#333"/><circle cx="35" cy="24" r="7" fill="#333"/>
+        <line x1="22" y1="0" x2="22" y2="-14" stroke="#555" stroke-width="3"/><circle cx="22" cy="-17" r="5" fill="#ff4fa3"/></g>`;
+  // overlays
+  if(o.low && moon) g += `<rect width="${W}" height="${H}" fill="#000018" opacity=".55"/><text x="20" y="30" fill="#ffd166" font-family="Fredoka,Nunito,sans-serif" font-size="20">🌑 Dark spell: low solar power</text>`;
+  if(o.low && !moon) g += `<rect width="${W}" height="${H}" fill="#9a5a2a" opacity=".6"/><text x="20" y="30" fill="#fff" font-family="Fredoka,Nunito,sans-serif" font-size="20">🌪️ Dust storm: low solar power</text>`;
+  if(o.storm){
+    g += `<circle cx="40" cy="20" r="110" fill="url(#glow${site})" opacity=".85"/>`;
+    let sd=3; const rr=()=>{sd=(sd*9301+49297)%233280; return sd/233280;};
+    for(let i=0;i<22;i++){ const x=80+rr()*560, y=12+rr()*110; g+=`<line x1="${x}" y1="${y}" x2="${x+22}" y2="${y+11}" stroke="#ffe066" stroke-width="2.5" stroke-linecap="round" opacity="${.5+rr()*.5}"/>`; }
+    g += `<text x="${W/2}" y="30" fill="#ffe066" font-family="Fredoka,Nunito,sans-serif" font-size="22" text-anchor="middle">☀️ Solar storm!</text>`;
+  }
+  svg.innerHTML = g;
+}
+
+/* =========================================================
+   end screen
+   ========================================================= */
+function finish(result){
+  $("#toast").classList.add("hidden");
+  SFX.play(result==="win"?"win":"fail");
+  const s=S.site, win = result==="win";
+  let stars = 0;
+  if(win){ stars=1; if(S.sci>=S.site.sciGoal) stars++; if(S.dose<=DOSE_BUDGET*.5) stars++; }
+  const msgs = {
+    win:["Mission complete! 🎉", `Your crew survived all 30 ${s.days} ${s.place}.`],
+    air:["The air ran out 😮‍💨", `On ${s.dayWord} ${S.day} the crew had to put on spacesuits and head home early.`],
+    food:["The food ran out 🥄", `On ${s.dayWord} ${S.day} the food store was empty, so the crew had to head home early.`],
+    dose:["Too much radiation ☢️", `On ${s.dayWord} ${S.day} the crew's dose went over the ${DOSE_BUDGET} mSv mission limit, so the flight doctors called them home.`]
+  };
+  const tips = {
+    air:`The crew breathes ${AIR_USE} air a ${s.dayWord.toLowerCase()}, so give Air at least 3 ⚡ each ${s.dayWord.toLowerCase()} and save battery before ${s.key==="moon"?"dark spells":"dust storms"}.`,
+    food:`Plants take ${GROW_DAYS} ${s.days} to grow. Plant a little every ${s.dayWord.toLowerCase()} so food keeps coming.`,
+    dose:"Build shield layers early, and go to the storm shelter when a solar storm comes."
+  };
+  const lessons = [];
+  if(S.seen.has("lowstart")) lessons.push(s.key==="moon" ? "🌑 Solar power is not always there. Saving energy in a battery keeps the crew alive through dark spells, and on the Moon you can plan for them." : "🌪️ Mars dust storms are hard to predict and can cut solar power for days. This really ended NASA's Opportunity rover.");
+  if(S.seen.has("storm")) lessons.push("☀️ Shields stop solar storm particles well, but cosmic rays are much harder to block. That's why NASA watches space weather every day (DONKI).");
+  lessons.push("🌱 Food is a long-term plan: plants need power today to give food days later.");
+  lessons.push("⚖️ Every ⚡ spent on safety is not spent on science, and every ⚡ spent on science is not spent on safety. Mission planners balance this every day.");
+  if(s.key==="mars") lessons.push("📡 Messages take minutes to reach Earth, so a Mars crew must make many decisions on its own.");
+  else lessons.push("☢️ The Moon has no air, so its radiation is about 2.6 times higher than on the Space Station.");
+
+  $("#endCard").innerHTML = `
+    <div class="result"><div class="stars">${"⭐".repeat(stars)}${"☆".repeat(3-stars)}</div>
+      <h1>${msgs[result][0]}</h1><p style="font-size:19px">${msgs[result][1]}</p>
+      ${!win?`<p class="fact" style="text-align:left">💡 <b>Tip for next time:</b> ${tips[result]}</p>`:""}
+      <p style="font-weight:800">${win?"✅":"❌"} Survive 30 ${s.days} &nbsp;·&nbsp; ${win&&S.sci>=s.sciGoal?"✅":"❌"} Reach ${s.sciGoal} science &nbsp;·&nbsp; ${win&&S.dose<=DOSE_BUDGET*.5?"✅":"❌"} Keep dose under ${DOSE_BUDGET*.5} mSv</p></div>
+    <div class="kpis">
+      <div class="kpi">${s.dayWord}s survived<div>${win?DAYS:S.day-1}</div></div>
+      <div class="kpi">Science<div>${S.sci}</div></div>
+      <div class="kpi">Radiation dose<div>${r1(S.dose)} mSv</div></div>
+      <div class="kpi">Shield layers<div>${S.shield}</div></div>
+    </div>
+    <h3>📈 Your mission, day by day</h3>
+    ${chart()}
+    <h3>🧠 What you learned</h3>
+    <ul class="lessons">${lessons.map(l=>`<li>${l}</li>`).join("")}</ul>
+    <p class="fact">🔭 <b>Real world check:</b> your crew got ${r1(S.dose)} mSv in ${win?DAYS:S.day-1} ${s.days}. People on Earth get about 2–3 mSv in a whole year. NASA's limit for an astronaut's whole career is 600 mSv.</p>
+    <div class="btnrow">
+      <button class="btn" onclick="newGame('${s.key}')">🔁 Play again (new events)</button>
+      <button class="btn alt" onclick="newGame('${s.key==="moon"?"mars":"moon"}')">${s.key==="moon"?"🔴 Try Mars":"🌕 Try the Moon"}</button>
+      <button class="btn ghost" onclick="show('start')">🏠 Home</button>
+    </div>`;
+  show("end");
+}
+
+function chart(){
+  const H=S.hist, W=760, Hh=220, pad=34, n=DAYS;
+  const x = d => pad + d/n*(W-pad-10);
+  const y = v => Hh-24 - v/100*(Hh-64);
+  const yd = v => Hh-24 - clamp(v/DOSE_BUDGET,0,1.05)*(Hh-64);
+  const line = (key,fn,col) => `<polyline fill="none" stroke="${col}" stroke-width="3.5" stroke-linejoin="round" points="${H.map(h=>`${x(h.day)},${fn(h[key])}`).join(" ")}"/>`;
+  let g = `<svg viewBox="0 0 ${W} ${Hh}" style="width:100%;background:#f7f8ff;border-radius:14px">`;
+  [0,50,100].forEach(v=> g+=`<line x1="${pad}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="#dde1f2"/><text x="${pad-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="#777">${v}</text>`);
+  g += `<line x1="${pad}" x2="${W-10}" y1="${yd(DOSE_BUDGET)}" y2="${yd(DOSE_BUDGET)}" stroke="#e5484d" stroke-dasharray="6 5"/>`;
+  g += `<text x="${W-12}" y="${yd(DOSE_BUDGET)-5}" font-size="11" text-anchor="end" fill="#e5484d">dose limit ${DOSE_BUDGET} mSv</text>`;
+  g += line("air",y,"#2bb3ff") + line("food",y,"#3cc46a") + line("dose",yd,"#ff6b4a");
+  for(let d=0; d<=n; d+=5) g += `<text x="${x(d)}" y="${Hh-6}" font-size="11" text-anchor="middle" fill="#777">${d}</text>`;
+  g += `<text x="${pad+6}" y="18" font-size="13" font-weight="700" fill="#2bb3ff">● Air</text><text x="${pad+60}" y="18" font-size="13" font-weight="700" fill="#3cc46a">● Food</text><text x="${pad+124}" y="18" font-size="13" font-weight="700" fill="#ff6b4a">● Radiation dose (vs limit)</text>`;
+  return g + `</svg>`;
+}
+
+/* =========================================================
+   modals: data sources, teachers, live space weather
+   ========================================================= */
+function modal(html){ $("#modalBody").innerHTML = html; $("#modal").classList.remove("hidden"); }
+$("#modalClose").onclick = () => $("#modal").classList.add("hidden");
+$("#modal").onclick = e => { if(e.target.id==="modal") $("#modal").classList.add("hidden"); };
+
+const SOURCES = [
+  ["NASA DONKI (Space Weather Database)", "https://ccmc.gsfc.nasa.gov/tools/DONKI/", "Real solar flares used for solar storm events (May 2024 and October 2024 X-class flares). The 📡 button pulls the latest flares live from api.nasa.gov/DONKI/FLR when the page is hosted online."],
+  ["NASA Solar Dynamics Observatory: flare reports", "https://svs.gsfc.nasa.gov/14592/", "Confirms the X8.7 (14 May 2024) and X9.0 (3 Oct 2024) flare classes and dates."],
+  ["NASA OSDR / RadLab radiation dosimetry", "https://visualization.osdr.nasa.gov/radlab/gui/data-api/", "Real ISS dose readings (about 0.5 mSv/day), used for comparison in fact cards. Next step: pull RadLab readings live."],
+  ["NASA OSDR (Open Science Data Repository)", "https://osdr.nasa.gov/bio/repo/", "Bone loss in spaceflight (about 1–1.5% per month without exercise), used in the Exercise event."],
+  ["NASA Curiosity rover: RAD instrument", "https://www.sciencedaily.com/releases/2013/12/131209181133.htm", "Mars surface dose of 0.67 mSv/day (Hassler et al., Science, 2013), used as the Mars daily radiation rate."],
+  ["Chang'e-4 Lunar Lander Neutron & Dosimetry (LND)", "https://www.science.org/doi/10.1126/sciadv.aaz1334", "Moon surface dose of 1.369 mSv/day (Zhang et al., Science Advances, 2020), used as the Moon daily rate. NASA scientists said it agrees with NASA's LRO/CRaTER measurements."],
+  ["NASA-STD-3001 radiation standard", "https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf", "Career limit of 600 mSv and solar particle event limit of 250 mSv, shown in the dose panel and the end screen."],
+  ["NASA Opportunity rover: 2018 dust storm", "https://science.nasa.gov/mission/mer-opportunity/", "Power fell from about 300 Wh to 22 Wh a day; last contact 10 June 2018. Used in the Mars Dust storm event."],
+  ["NASA Veggie & ISS stories", "https://www.nasa.gov/humans-in-space/growing-plants-in-space/", "Lettuce eaten in 2015, the mouldy zinnias saved in 2016, and the 2020 tea-leaf leak hunt, used in fact cards."],
+  ["CSA: Food production on the Moon and in remote areas", "https://www.asc-csa.gc.ca/eng/youth-educators/toolkits/food-production/", "Why plants on an outpost need light, water and warmth, all of which cost power."],
+  ["NASA Mars Trek", "https://trek.nasa.gov/mars/", "Jezero Crater was chosen as the Mars site. Next step: add a real Mars Trek terrain map as the base background."]
+];
+$("#btnData").onclick = () => modal(`<h2>📚 Where the science comes from</h2>
+  <p>Every number marked <span class="realtag">Real NASA data</span> comes from a real measurement or event. Game simplifications are labelled <b>game estimate</b> or <b>game rule</b> in the 🔬 science view.</p>
+  ${SOURCES.map(s=>`<div class="src"><b><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></b><small>${s[2]}</small></div>`).join("")}
+  <h3>What is simplified (and why)</h3>
+  <ul><li><b>Time:</b> dark spells are shortened (a real lunar night away from the poles is about 14 Earth days).</li>
+  <li><b>Solar storm dose:</b> estimated from flare size (about 5 mSv per X-class unit, unshielded, on the Moon). Real storms vary a lot.</li>
+  <li><b>Air, food and power</b> use simple units (not kg or kWh), so kids can do the maths in their heads.</li>
+  <li><b>Shield layers</b> stand for regolith (soil) and water walls. The rule that they block solar particles better than cosmic rays matches real physics.</li></ul>`);
+
+$("#btnTeach").onclick = () => modal(`<h2>👩‍🏫 For teachers & parents</h2>
+  <p><b>Ages:</b> 7–12 (older kids can turn on 🔬 Science view). <b>Time:</b> 10–15 minutes per mission. No login and no download needed.</p>
+  <h3>Learning goals</h3>
+  <ul><li>Limited power means every choice has a cost (<b>trade-offs</b>).</li>
+  <li>Space radiation is real, it adds up over time, and shielding helps.</li>
+  <li>The Moon and Mars are different worlds: light, air, radiation and distance from Earth.</li>
+  <li>Plan ahead: plants take time, and batteries carry you through dark periods.</li></ul>
+  <h3>Questions to discuss after playing</h3>
+  <ol><li>Why can't you put all your power into Science?</li>
+  <li>Why is radiation higher on the Moon than on Mars?</li>
+  <li>When was the shelter worth it during a solar storm? When was it not?</li>
+  <li>Why does a Mars crew need to solve problems without help from Earth?</li>
+  <li>What did you change in your second game, and did it work?</li></ol>
+  <h3>Classroom idea</h3>
+  <p>Pairs play the same site. Compare final stars, dose and science on the board. Ask the class: which strategy was safest, and which did the most science? Is there one “best” plan?</p>`);
+
+function soundBtn(){ const b=$("#btnSound"); b.textContent = SFX.on?"🔊 Sound":"🔇 Muted"; b.classList.toggle("on", SFX.on); }
+$("#btnSound").onclick = () => { SFX.on=!SFX.on; try{ localStorage.setItem("outpost30-sound", SFX.on?"on":"off"); }catch(e){} soundBtn(); SFX.play("tick"); };
+soundBtn();
+$("#btnSci").onclick = () => { SFX.play("tick"); document.body.classList.toggle("sci"); $("#btnSci").classList.toggle("on"); };
+
+$("#btnLive").onclick = async () => {
+  modal(`<h2>📡 Live space weather from NASA DONKI</h2><p>Asking NASA for solar flares from the last 30 days…</p>`);
+  const end = new Date(), start = new Date(Date.now()-30*864e5);
+  const iso = d => d.toISOString().slice(0,10);
+  const url = `https://api.nasa.gov/DONKI/FLR?startDate=${iso(start)}&endDate=${iso(end)}&api_key=${NASA_API_KEY}`;
+  try{
+    const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 8000);
+    const res = await fetch(url, {signal:ctrl.signal}); clearTimeout(to);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data = await res.json();
+    const fl = (data||[]).filter(f=>/^[MX]/.test(f.classType||"")).map(f=>{
+      const n = parseFloat(f.classType.slice(1))||1; const isX = f.classType[0]==="X";
+      return {date:new Date(f.peakTime||f.beginTime).toUTCString().slice(5,16), cls:f.classType, strength: isX? n : n/10,
+        note:`Recorded by NASA ${f.instruments&&f.instruments[0]?("("+f.instruments[0].displayName+")"):""} from active region ${f.activeRegionNum||"?"}.`, live:true};
+    }).reverse();
+    liveFlares = fl.slice(0,8);
+    const biggest = fl.find(f=>f.cls[0]==="X");
+    $("#modalBody").innerHTML = `<h2>📡 Live space weather from NASA DONKI</h2>
+      <p class="ok">✔ Connected to NASA. ${fl.length} M- or X-class flares in the last 30 days.</p>
+      ${biggest?`<p>☀️ Big flare alert: <b>${biggest.cls}</b> on ${biggest.date}. Astronauts on the Moon would have needed shelter!</p>`:`<p>🌤️ No X-class flares in the last 30 days. A fairly calm month for astronauts.</p>`}
+      ${fl.length?`<table class="fl"><tr><th>Date (UTC)</th><th>Class</th></tr>${fl.slice(0,8).map(f=>`<tr><td>${f.date}</td><td>${f.cls}</td></tr>`).join("")}</table>`:""}
+      <p><label><input type="checkbox" id="useLiveBox" ${useLive?"checked":""}> Use these <b>live</b> flares in my next mission</label></p>
+      <p style="color:var(--muted);font-size:14px">Source: api.nasa.gov/DONKI/FLR</p>`;
+    $("#useLiveBox").onchange = e => { useLive = e.target.checked; };
+  }catch(e){
+    $("#modalBody").innerHTML = `<h2>📡 Live space weather from NASA DONKI</h2>
+      <p class="bad">Live data can't be reached from this preview.</p>
+      <p>This preview page is not allowed to contact outside websites. When the game is hosted online (for example on GitHub Pages), this button pulls the newest solar flares straight from <b>api.nasa.gov/DONKI</b> and can use them as events.</p>
+      <p>Right now the game uses <b>archived real flares</b> from NASA (2024 and 1972). We never show stored data as live.</p>`;
+  }
+};
+
+/* =========================================================
+   start screen
+   ========================================================= */
+document.querySelectorAll(".go").forEach(b=>b.onclick=()=>newGame(b.dataset.site));
+$("#endDay").onclick = endDay;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.remove("hidden"); t.style.opacity=1; clearTimeout(toast._t); toast._t=setTimeout(()=>{t.style.opacity=0; setTimeout(()=>t.classList.add("hidden"),400);},2600); }
+(function minis(){
+  // reuse scene renderer for the small previews
+  const mk = (id,site) => { const svg=$("#"+id); const tmp=document.createElementNS("http://www.w3.org/2000/svg","svg"); drawScene(tmp,site,{low:false,storm:false,shield:2,growing:3,dmg:false}); svg.setAttribute("viewBox","0 90 800 160"); svg.innerHTML=tmp.innerHTML; };
+  mk("miniMoon","moon"); mk("miniMars","mars");
+})();
+</script>
+</body>
+</html>
