@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- AI acknowledgement (NASA Space Apps rules): the HTML, CSS and JavaScript code, the SVG artwork drawn by that code
+     and the synthesized sound effects in this file were generated with the help of an AI assistant (Claude, by Anthropic)
+     and reviewed and tested by the team. All science numbers were checked against the original sources listed in-game. -->
+<meta name="generator" content="Code, SVG art and sound effects created with AI assistance (Claude by Anthropic); reviewed by the Outpost 30 team">
+<meta name="description" content="Outpost 30: a browser game for kids aged 7-12 to run a Moon or Mars outpost using real NASA data. Made with AI assistance.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Outpost 30 – Junior Astronaut Mission Trainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -211,7 +216,7 @@ table.fl td,table.fl th{border-bottom:1px solid var(--line);padding:6px;text-ali
     <div class="card endcard" id="endCard"></div>
   </section>
 
-  <div class="foot">Made for the 2026 NASA Space Apps Challenge: “Build a Junior Astronaut Mission Trainer”. Not an official NASA product, and NASA does not endorse it.
+  <div class="foot">Made for the 2026 NASA Space Apps Challenge: “Build a Junior Astronaut Mission Trainer”. Not an official NASA product, and NASA does not endorse it. Code, art and sound effects were made with AI assistance (Claude) and checked by our team.
     Real data from NASA DONKI, NASA OSDR / RadLab, NASA Curiosity RAD, NASA-STD-3001 and the CSA. Tap 📚 for details.</div>
 </div>
 
@@ -757,6 +762,7 @@ function drawScene(svg, site, o){
     for(let i=0;i<22;i++){ const x=80+rr()*560, y=12+rr()*110; g+=`<line x1="${x}" y1="${y}" x2="${x+22}" y2="${y+11}" stroke="#ffe066" stroke-width="2.5" stroke-linecap="round" opacity="${.5+rr()*.5}"/>`; }
     g += `<text x="${W/2}" y="30" fill="#ffe066" font-family="Fredoka,Nunito,sans-serif" font-size="22" text-anchor="middle">☀️ Solar storm!</text>`;
   }
+  g += `<text x="${W-8}" y="${H-8}" fill="#ffffff" opacity=".75" font-family="Nunito,sans-serif" font-size="11" text-anchor="end">AI-assisted art · Outpost 30</text>`;
   svg.innerHTML = g;
 }
 
@@ -836,7 +842,7 @@ $("#modalClose").onclick = () => $("#modal").classList.add("hidden");
 $("#modal").onclick = e => { if(e.target.id==="modal") $("#modal").classList.add("hidden"); };
 
 const SOURCES = [
-  ["NASA DONKI (Space Weather Database)", "https://ccmc.gsfc.nasa.gov/tools/DONKI/", "Real solar flares used for solar storm events (May 2024 and October 2024 X-class flares). The 📡 button pulls the latest flares live from api.nasa.gov/DONKI/FLR when the page is hosted online."],
+  ["NASA DONKI (Space Weather Database)", "https://ccmc.gsfc.nasa.gov/tools/DONKI/", "Real solar flares used for solar storm events (May 2024 and October 2024 X-class flares). The 📡 button pulls the latest flares live from NASA DONKI (ccmc.gsfc.nasa.gov/DONKI-API) when the page is hosted online."],
   ["NASA Solar Dynamics Observatory: flare reports", "https://svs.gsfc.nasa.gov/14592/", "Confirms the X8.7 (14 May 2024) and X9.0 (3 Oct 2024) flare classes and dates."],
   ["NASA OSDR / RadLab radiation dosimetry", "https://visualization.osdr.nasa.gov/radlab/gui/data-api/", "Real ISS dose readings (about 0.5 mSv/day), used for comparison in fact cards. Next step: pull RadLab readings live."],
   ["NASA OSDR (Open Science Data Repository)", "https://osdr.nasa.gov/bio/repo/", "Bone loss in spaceflight (about 1–1.5% per month without exercise), used in the Exercise event."],
@@ -882,12 +888,21 @@ $("#btnLive").onclick = async () => {
   modal(`<h2>📡 Live space weather from NASA DONKI</h2><p>Asking NASA for solar flares from the last 30 days…</p>`);
   const end = new Date(), start = new Date(Date.now()-30*864e5);
   const iso = d => d.toISOString().slice(0,10);
-  const url = `https://api.nasa.gov/DONKI/FLR?startDate=${iso(start)}&endDate=${iso(end)}&api_key=${NASA_API_KEY}`;
+  // Since late 2026 DONKI is served from CCMC directly (no key). Older api.nasa.gov address kept as a backup.
+  const urls = [
+    `https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR?startDate=${iso(start)}&endDate=${iso(end)}`,
+    `https://api.nasa.gov/DONKI/FLR?startDate=${iso(start)}&endDate=${iso(end)}&api_key=${NASA_API_KEY}`
+  ];
+  const getJSON = async (url) => {
+    const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
+    try{ const res = await fetch(url, {signal:ctrl.signal}); if(!res.ok) throw new Error("HTTP "+res.status); return await res.json(); }
+    finally{ clearTimeout(to); }
+  };
+  let srcUsed = "";
   try{
-    const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 8000);
-    const res = await fetch(url, {signal:ctrl.signal}); clearTimeout(to);
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const data = await res.json();
+    let data = null, lastErr = null;
+    for(const u of urls){ try{ data = await getJSON(u); srcUsed = new URL(u).host + new URL(u).pathname; break; }catch(e){ lastErr = e; } }
+    if(!Array.isArray(data)) throw lastErr || new Error("No data");
     const fl = (data||[]).filter(f=>/^[MX]/.test(f.classType||"")).map(f=>{
       const n = parseFloat(f.classType.slice(1))||1; const isX = f.classType[0]==="X";
       return {date:new Date(f.peakTime||f.beginTime).toUTCString().slice(5,16), cls:f.classType, strength: isX? n : n/10,
@@ -900,12 +915,12 @@ $("#btnLive").onclick = async () => {
       ${biggest?`<p>☀️ Big flare alert: <b>${biggest.cls}</b> on ${biggest.date}. Astronauts on the Moon would have needed shelter!</p>`:`<p>🌤️ No X-class flares in the last 30 days. A fairly calm month for astronauts.</p>`}
       ${fl.length?`<table class="fl"><tr><th>Date (UTC)</th><th>Class</th></tr>${fl.slice(0,8).map(f=>`<tr><td>${f.date}</td><td>${f.cls}</td></tr>`).join("")}</table>`:""}
       <p><label><input type="checkbox" id="useLiveBox" ${useLive?"checked":""}> Use these <b>live</b> flares in my next mission</label></p>
-      <p style="color:var(--muted);font-size:14px">Source: api.nasa.gov/DONKI/FLR</p>`;
+      <p style="color:var(--muted);font-size:14px">Source: NASA DONKI (${srcUsed})</p>`;
     $("#useLiveBox").onchange = e => { useLive = e.target.checked; };
   }catch(e){
     $("#modalBody").innerHTML = `<h2>📡 Live space weather from NASA DONKI</h2>
-      <p class="bad">Live data can't be reached from this preview.</p>
-      <p>This preview page is not allowed to contact outside websites. When the game is hosted online (for example on GitHub Pages), this button pulls the newest solar flares straight from <b>api.nasa.gov/DONKI</b> and can use them as events.</p>
+      <p class="bad">NASA's live space weather server didn't answer right now.</p>
+      <p>The server may be busy, or this page may not be allowed to contact outside websites (for example, inside a preview). Try again in a minute. When it works, this button pulls the newest solar flares from <b>NASA DONKI</b> and can use them as game events.</p>
       <p>Right now the game uses <b>archived real flares</b> from NASA (2024 and 1972). We never show stored data as live.</p>`;
   }
 };
